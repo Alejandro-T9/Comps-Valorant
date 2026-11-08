@@ -1,0 +1,462 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Comps Premier Acto 6</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap">
+<style>
+/* Layout: barra fija con mapa y pestañas; debajo, la vista activa. Tarjetas con esquina cortada, estilo táctico oscuro. */
+:root{
+  --bg:#0f1923; --panel:#1b2733; --panel2:#243241; --line:#33465a;
+  --fg:#ece8e1; --mut:#9aa8b6; --red:#ff4655; --red-d:#c93442;
+  --ctl:#7e57c2; --ini:#e07b00; --sen:#1f8f82; --due:#d1495b; --unk:#8a8a8a;
+  --ok:#3fb68b; --warn:#e3a72f; --bad:#e0566a;
+  --f-d:"Barlow Condensed","Arial Narrow",Impact,sans-serif;
+  --f-b:"Barlow","Segoe UI",system-ui,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:15px/1.5 var(--f-b);margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 40px}
+.wrap{max-width:1100px;margin:0 auto}
+h1,h2,h3{font-family:var(--f-d);text-transform:uppercase;letter-spacing:.04em;margin:0;text-wrap:balance}
+button,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+a{color:var(--red)}
+.cut{clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,14px 100%,0 calc(100% - 14px))}
+
+header.top{padding:22px 0 12px;display:flex;flex-wrap:wrap;gap:6px 18px;align-items:baseline;justify-content:space-between}
+header.top h1{font-size:clamp(28px,6vw,44px);line-height:1}
+header.top h1 b{color:var(--red);font-weight:700}
+.meta{color:var(--mut);font-size:13px}
+
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:10}
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--bg);padding:8px 0 10px;border-bottom:1px solid var(--line)}
+.bar-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.sel{display:flex;flex-direction:column;gap:2px;flex:1 1 200px;min-width:0}
+.sel label{font-family:var(--f-d);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--mut)}
+select{background:var(--panel);border:1px solid var(--line);padding:10px 12px;min-height:44px;width:100%;font-weight:600;font-size:16px;appearance:auto}
+.tabs{display:flex;gap:4px;overflow-x:auto;flex:3 1 380px;scrollbar-width:thin;padding-bottom:2px}
+.tab{background:var(--panel);border:1px solid var(--line);padding:10px 14px;min-height:44px;cursor:pointer;
+  font-family:var(--f-d);font-size:16px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;flex:0 0 auto}
+.tab[aria-selected="true"]{background:var(--red);border-color:var(--red);color:#fff}
+.tab:hover:not([aria-selected="true"]){background:var(--panel2)}
+
+.mapHead{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;padding:16px 0 4px}
+.mapHead h2{font-size:34px}
+.pill{display:inline-block;font-size:12px;font-weight:600;padding:2px 9px;border:1px solid var(--line);color:var(--mut);letter-spacing:.03em}
+.pill.dato{color:var(--ok);border-color:var(--ok)}
+.pill.prac{color:var(--warn);border-color:var(--warn)}
+.pill.crit{color:var(--mut)}
+.conf-Alto{color:var(--ok);border-color:var(--ok)} .conf-Medio-Alto{color:var(--ok);border-color:var(--ok)}
+.conf-Medio{color:var(--warn);border-color:var(--warn)} .conf-Medio-Bajo{color:var(--warn);border-color:var(--warn)} .conf-Bajo{color:var(--bad);border-color:var(--bad)}
+.sub{color:var(--mut);margin:0 0 12px}
+
+.panel{background:var(--panel);padding:16px}
+.note{border:1px dashed var(--line);padding:10px 12px;color:var(--mut);font-size:13.5px;margin:12px 0}
+.note b{color:var(--fg)}
+
+.stats{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 14px}
+.rolechip{display:flex;align-items:center;gap:8px;padding:6px 12px;background:var(--panel);border-left:4px solid var(--c)}
+.rolechip .n{font-family:var(--f-d);font-size:26px;line-height:1}
+.rolechip.zero .n{color:var(--bad)}
+.rolechip small{color:var(--mut);display:block;font-size:12px;line-height:1.1}
+.cov{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+.cv{font-size:13px;padding:3px 10px;border:1px solid var(--line);display:flex;gap:6px;align-items:center}
+.cv i{font-style:normal;font-weight:700}
+.cv.yes{color:var(--ok);border-color:var(--ok)} .cv.part{color:var(--warn);border-color:var(--warn)} .cv.no{color:var(--mut)}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.card{background:var(--panel);border:0;padding:0;text-align:left;display:flex;flex-direction:column;min-width:0;position:relative}
+.card .pic{aspect-ratio:3/4;background:linear-gradient(180deg,var(--panel2),var(--panel));overflow:hidden;position:relative}
+.card .pic img{width:100%;height:100%;object-fit:cover;object-position:top;display:block}
+.card .pic::after{content:"";position:absolute;inset:auto 0 0;height:55%;background:linear-gradient(0deg,var(--panel),transparent)}
+.card .body{padding:2px 10px 10px;display:flex;flex-direction:column;gap:5px}
+.card h3{font-size:24px;line-height:1}
+.card .role{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--c)}
+.card[aria-pressed="true"]{box-shadow:inset 0 0 0 2px var(--red);background:var(--panel2)}
+.card .rank{position:absolute;top:8px;left:8px;z-index:2;font-size:11px;font-weight:700;padding:1px 7px;background:var(--bg);color:var(--mut);letter-spacing:.05em}
+.card .rank.alt{background:var(--warn);color:#1b1500}
+.chips{display:flex;flex-wrap:wrap;gap:4px}
+.chip{font-size:11.5px;padding:1px 7px;background:var(--bg);border:1px solid var(--line);color:var(--fg)}
+.swap{margin-top:6px;background:transparent;border:1px solid var(--line);padding:8px;min-height:40px;cursor:pointer;font-size:13px;width:100%}
+.swap:hover{border-color:var(--red);color:var(--red)}
+
+.detail{margin-top:14px;display:grid;grid-template-columns:120px minmax(0,1fr);gap:16px}
+.detail .big{aspect-ratio:3/4;background:var(--panel2);overflow:hidden}
+.detail .big img{width:100%;height:100%;object-fit:cover;object-position:top}
+.detail h3{font-size:30px}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:10px}
+.cols h4{margin:0 0 4px;font-family:var(--f-d);font-size:15px;letter-spacing:.1em;text-transform:uppercase;color:var(--red)}
+.cols p{margin:4px 0}
+.why{margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+@media(max-width:560px){.detail{grid-template-columns:1fr}.detail .big{max-width:140px}}
+
+.group{margin-bottom:14px}
+.group>h3{font-size:22px;display:flex;gap:10px;align-items:center;margin-bottom:6px}
+.group>h3 small{font-family:var(--f-b);font-size:13px;text-transform:none;letter-spacing:0;color:var(--mut);font-weight:400}
+.row{display:grid;grid-template-columns:56px minmax(0,1fr);gap:12px;background:var(--panel);padding:10px;margin-bottom:6px;align-items:start}
+.row .av{width:56px;aspect-ratio:3/4;overflow:hidden;background:var(--panel2)}
+.row .av img{width:100%;height:100%;object-fit:cover;object-position:top}
+.row b{font-family:var(--f-d);font-size:20px;letter-spacing:.04em;text-transform:uppercase}
+.row p{margin:2px 0 0}
+
+.seg{display:inline-flex;margin-bottom:12px}
+.seg button{background:var(--panel);border:1px solid var(--line);padding:9px 18px;min-height:44px;cursor:pointer;font-family:var(--f-d);letter-spacing:.06em;text-transform:uppercase;font-size:16px}
+.seg button[aria-pressed="true"]{background:var(--red);border-color:var(--red);color:#fff}
+.tl{list-style:none;margin:0;padding:0 0 0 18px;border-left:2px solid var(--line);display:flex;flex-direction:column;gap:12px}
+.tl li{position:relative;background:var(--panel);padding:12px 14px}
+.tl li::before{content:"";position:absolute;left:-26px;top:16px;width:12px;height:12px;background:var(--red);transform:rotate(45deg)}
+.tl .t{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center}
+.tl .t h3{font-size:22px}
+.time{font-family:var(--f-d);font-size:18px;color:var(--red);letter-spacing:.04em}
+.who{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.who div{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.who .lab{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);min-width:110px}
+.who .ag{display:flex;gap:6px;align-items:center;background:var(--bg);padding:2px 10px 2px 2px}
+.who .ag span.im{width:26px;height:26px;overflow:hidden;display:block;background:var(--panel2)}
+.who .ag img{width:100%;height:100%;object-fit:cover;object-position:top 8%}
+.who .none{color:var(--mut);font-size:13px}
+
+.zones{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.zone h3{font-size:20px;margin-bottom:8px}
+.co{display:flex;flex-direction:column;gap:3px}
+.co div{display:flex;justify-content:space-between;gap:10px;padding:4px 0;border-bottom:1px solid var(--line);font-size:14px}
+.co div span:last-child{color:var(--mut);text-align:right}
+ul.plain{margin:6px 0;padding-left:20px} ul.plain li{margin:3px 0}
+.srcs a{display:block;margin:3px 0;overflow-wrap:anywhere}
+table{border-collapse:collapse;width:100%;min-width:480px} th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;font-size:14px;vertical-align:top}
+.tw{overflow-x:auto}
+h2.sec{font-size:26px;margin:22px 0 8px}
+.kit{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}
+.kit .panel{display:grid;grid-template-columns:64px minmax(0,1fr);gap:10px}
+.kit .av{aspect-ratio:3/4;overflow:hidden;background:var(--panel2)}
+.kit img{width:100%;height:100%;object-fit:cover;object-position:top}
+
+.card .pos{margin:6px 0 0;font-size:13.5px;line-height:1.4}
+.card .pos b{display:block;font-family:var(--f-d);font-size:14px;letter-spacing:.1em;text-transform:uppercase;color:var(--red);margin-bottom:2px}
+.card .pos .chips{margin-bottom:3px}
+.alt{display:grid;grid-template-columns:36px minmax(0,1fr);gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line);font-size:13px;line-height:1.35}
+.alt .im{width:36px;aspect-ratio:3/4;overflow:hidden;background:var(--panel2);display:block}
+.alt img{width:100%;height:100%;object-fit:cover;object-position:top}
+.alt small{display:block;font-weight:700;letter-spacing:.08em;color:var(--warn);font-size:11px}
+.alt .role{font-size:11px}
+footer{margin-top:30px;color:var(--mut);font-size:13px}
+@media(prefers-reduced-motion:no-preference){.card,.tab,.swap{transition:background .15s,border-color .15s}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <h1>Comps Premier <b>· Acto 6</b></h1>
+    <div class="meta">Parche 13.09 · datos revisados el 8 nov 2026</div>
+  </header>
+
+  <div class="bar">
+    <div class="bar-row">
+      <div class="sel"><label for="mapSel">Mapa</label><select id="mapSel"></select></div>
+      <div class="tabs" role="tablist" id="tabs"></div>
+    </div>
+  </div>
+
+  <main id="view"></main>
+  <footer>Las etiquetas <span class="pill dato">Dato</span> vienen de una página citada. <span class="pill prac">Práctica</span> es criterio basado en el kit del agente: no hay una fuente que publique posiciones exactas por agente y mapa. Probad todo en custom antes de usarlo en partida.</footer>
+</div>
+
+<script>
+const IMG={"raze": "fotos/raze.png", "astra": "fotos/astra.png", "breach": "fotos/breach.png", "brimstone": "fotos/brimstone.png", "chamber": "fotos/chamber.png", "cypher": "fotos/cypher.png", "clove": "fotos/clove.png", "deadlock": "fotos/deadlock.png", "fade": "fotos/fade.png", "gekko": "fotos/gekko.png", "harbor": "fotos/harbor.png", "hush": "fotos/hush.png", "iso": "fotos/iso.png", "jett": "fotos/jett.png", "kayo": "fotos/kayo.png", "killjoy": "fotos/killjoy.png", "miks": "fotos/miks.png", "neon": "fotos/neon.png", "omen": "fotos/omen.png", "phoenix": "fotos/phoenix.png", "reyna": "fotos/reyna.png", "sage": "fotos/sage.png", "skye": "fotos/skye.png", "sova": "fotos/sova.png", "tejo": "fotos/tejo.png", "veto": "fotos/veto.png", "viper": "fotos/viper.png", "vyse": "fotos/vyse.png", "waylay": "fotos/waylay.png", "yoru": "fotos/yoru.png"};
+const img=n=>IMG[n.toLowerCase().replace("/","")]||"";
+
+/* ---------- Fuentes ---------- */
+const S={
+ vlr:["vlr.gg: Champions 2026 (presencia de agentes)","https://www.vlr.gg/event/agents/2766/valorant-champions-2026"],
+ vlrs:["vlr.gg: Masters Santiago 2026 (presencia de agentes)","https://www.vlr.gg/event/agents/2760/valorant-masters-santiago-2026"],
+ strafe:["Strafe: guía de Premier (calendario V26A6)","https://www.strafe.com/articles/read/valorant-premier-mode-guide/"],
+ p1309:["Dot Esports: notas del parche 13.09","https://dotesports.com/valorant/news/valorant-13-09-patch-notes"],
+ p1308:["Dot Esports: notas del parche 13.08","https://dotesports.com/valorant/news/valorant-patch-13-08-notes"],
+ meta:["MetaBot, win rates en ranked","https://metabot.gg"],
+ mbmap:["MetaBot: control de mapa, defaults y ejecutes","https://metabot.gg/en/valorant/guides/valorant-map-control-defaults-executes"],
+ mbspike:["MetaBot: spike, plant, defuse y post-plant","https://metabot.gg/en/valorant/guides/valorant-spike-plant-defuse-postplant"],
+ dote:["Dot Esports: roles del equipo","https://dotesports.com/valorant/news/valorant-roles-explained-entry-fragger-lurker-and-more"],
+ spike:["The Spike: guía de callouts","https://www.thespike.gg/valorant/tips/valorant-callouts-guide"],
+ beeA:["Beebom: guía de Abyss","https://beebom.com/valorant-abyss-map-guide"],
+ beeS:["Beebom: guía de Summit","https://beebom.com/valorant-summit-map-guide/"],
+ enSun:["Esports.net: guía de Sunset","https://www.esports.net/news/valorant/sunset-map/"],
+ enCor:["Esports.net: guía de Corrode","https://www.esports.net/wiki/guides/valorant-corrode-map"],
+ miks:["The Spike: Miks","https://www.thespike.gg/valorant/agents/miks"],
+ hush:["The Spike: Hush","https://www.thespike.gg/valorant/agents/hush"],
+ tejo:["Riot: Tejo","https://playvalorant.com/en-gb/news/game-updates/tejo-man-of-action/"],
+ veto:["Esports.gg: Veto","https://esports.gg/news/valorant/guide-veto-ability-kit-valorant"]
+};
+
+/* ---------- Agentes ---------- */
+const ROLE={Astra:"Controlador",Brimstone:"Controlador",Clove:"Controlador",Harbor:"Controlador",Omen:"Controlador",Viper:"Controlador",Miks:"Controlador",
+ Breach:"Iniciador",Fade:"Iniciador",Gekko:"Iniciador","KAY/O":"Iniciador",Skye:"Iniciador",Sova:"Iniciador",Tejo:"Iniciador",
+ Chamber:"Centinela",Cypher:"Centinela",Deadlock:"Centinela",Killjoy:"Centinela",Sage:"Centinela",Veto:"Centinela",Vyse:"Centinela",
+ Hush:"Duelista",Iso:"Duelista",Jett:"Duelista",Neon:"Duelista",Phoenix:"Duelista",Raze:"Duelista",Reyna:"Duelista",Waylay:"Duelista",Yoru:"Duelista"};
+const RCOL={Controlador:"var(--ctl)",Iniciador:"var(--ini)",Centinela:"var(--sen)",Duelista:"var(--due)"};
+const RPLUR={Controlador:"Controladores",Iniciador:"Iniciadores",Centinela:"Centinelas",Duelista:"Duelistas"};
+/* Funciones del TikToker según el kit (criterio propio, no estadística). */
+const FUNC={Astra:"Humos · Lurker",Brimstone:"Humos · Apoyo/Flex",Clove:"Humos · Apoyo/Flex",Harbor:"Humos · Frena empuje",Omen:"Humos · Flasher",Viper:"Humos · Frena empuje",
+ Miks:"Humos · Apoyo/Flex",Breach:"Flasher · Frena empuje",Fade:"Intel",Gekko:"Intel · Flasher parcial","KAY/O":"Flasher · Intel",Skye:"Intel · Apoyo/Flex",Sova:"Intel",Tejo:"Intel · Apoyo/Flex",
+ Chamber:"Frena empuje · Lurker · Apoyo/Flex",Cypher:"Intel · Frena empuje · Lurker",Deadlock:"Frena empuje",Killjoy:"Frena empuje · Lurker",Sage:"Frena empuje · Apoyo/Flex",Veto:"Frena empuje · Apoyo/Flex",Vyse:"Frena empuje · Flasher parcial",
+ Hush:"Entry · Flasher",Iso:"Entry · Apoyo/Flex",Jett:"Entry",Neon:"Entry",Phoenix:"Entry · Flasher · Apoyo/Flex",Raze:"Entry",Reyna:"Entry · Flasher parcial",Waylay:"Entry",Yoru:"Entry · Flasher · Lurker"};
+const F7=["Entry","Flasher","Intel","Frena empuje","Humos","Lurker","Apoyo/Flex"];
+const F7D={Entry:"Movilidad real para generar espacio al entrar.",Flasher:"Flashes propias y fiables; las que se rompen cuentan como parcial.",Intel:"Da información: Sova, Fade, Skye, Gekko y la cámara de Cypher.",
+ "Frena empuje":"Para un push y gana tiempo para que llegue el equipo.",Humos:"Tapa las entradas enemigas al sitio. Harbor y Viper cuentan como muro.",Lurker:"Juega en ataque sin depender del equipo.","Apoyo/Flex":"Curación, segundo duelista o lo que no encaja en otra función."};
+
+const AR={entry:"Entra primero",trade:"Trade / segunda entrada",humos:"Humos y utilidad",info:"Información",lurk:"Lurk",post:"Post-plant"};
+const DR={anc:"Ancla",inf:"Información",ret:"Retraso",rot:"Rotación y retake",lurk:"Lurk"};
+
+/* ---------- Mapas ----------
+ comp: [agente, textoAtaque, textoDefensa, alternativa, porQué, ar(ataque), dr(defensa), arAlt, drAlt] */
+const MAPS=[
+{id:"abyss",name:"Abyss",conf:"Medio",sub:"Sin centinela en la comp, así que Astra y Yoru deben cubrir el flanco.",
+ pro:"Champions 2026 (8 mapas): Sova 100% · Harbor 81% · Yoru 69% · Waylay 69% · Astra 56% · Omen 38% · Neon 31% · Cypher 19% · Skye 0% · Clove 0% · Chamber, Killjoy y Vyse 0%. Ataque 55% / Defensa 45%. En Masters Santiago (9 mapas) Harbor bajó a 28% y Omen subió a 72%: la pareja de controladores cambia según el evento.",proSrc:["vlr"],
+ nota:"El mapa no tiene paredes exteriores y se puede caer por los bordes. Practicad las posiciones en custom.",
+ comp:[
+ ["Harbor","Muro largo para cruzar sin exponerse a los bordes.","Muro de agua en el sitio atacado y Cove para el retake.","Clove","Sin dato pro en Abyss; autosuficiente y puede fumar tras morir.",["humos"],["ret"],["humos"],["ret"]],
+ ["Astra","Cierra humos y juega lejos del equipo para cubrir el flanco. Post-plant con Gravity Well y Nova Pulse.","Estrellas globales en ambos sitios; juega la rotación desde lejos.","Omen","Es la alternativa directa a Astra en pro (38% de presencia).",["humos","lurk"],["rot"],["humos","trade"],["rot"]],
+ ["Sova","Primero dron o Recon: es la fuente de información.","Recon temprano en los mains y Shock Darts para retrasar.","Skye","Solo si nadie domina Sova (100% en pro). Sin dato pro de Skye.",["info"],["inf"],["info"],["inf"]],
+ ["Waylay","Entra primero con su movilidad.","Pick temprano y retake rápido.","Cypher","Da el centinela que la comp no tiene; pierdes un duelista.",["entry"],["rot"],["lurk"],["anc"]],
+ ["Yoru","Segunda entrada detrás de Waylay, con su flash.","Información y pick temprano con movilidad; retakes.","Neon","Segundo duelista móvil. Sin dato pro por mapa en Abyss.",["trade"],["inf"],["trade"],["inf"]]],
+ zones:[["Sitio A",["A Tower|Torre A","Ascender|Ascensor","A Back Site|Fondo de A","A Bridge|Puente A"]],["Sitio B",["B Tower|Torre B","B Link|Conexión B","B Main|Entrada B","B Under|Bajo B","B Danger|Peligro B"]],["Mid",["Mid Library|Biblioteca","Mid Catwalk|Pasarela","A Vents|Ductos A"]]],
+ mech:["No hay límites: puedes caer del mapa y morir.","Death Drops que permiten rotar rápido; agacharse y saltar los hace más silenciosos.","Casi todas las paredes se pueden atravesar con balas.","Vent rompible que conecta Mid Catwalk con A Tower.","Cada sitio tiene una sola entrada (A Main o B Main); mid conecta con los sitios por varias entradas.","Astra, Cypher y Breach pueden empujar enemigos fuera del mapa, y también aliados."],
+ csrc:["beeA"]},
+{id:"bind",name:"Bind",conf:"Medio-Bajo",sub:"No estuvo en Champions 2026 y no hay datos pro de este acto.",
+ pro:"VCT 2026, enero a marzo (Masters Santiago 5 mapas / EMEA Kickoff 12 / Pacific Kickoff 11): Viper 90% / 100% / 86% · Brimstone 80% / 83% / 91% · Fade 70% / 46% / 68% · Yoru 70% / 38% / 68% · Raze 40% / 54% / 64% · Skye 30% / 54% / 27% · Waylay 40% / 42% / 41%. Omen, Sova y Cypher: 0% en los tres. No hay datos pro desde que Bind volvió al pool. En ranked (MetaBot) la defensa gana 53,9% y el ataque 47,0%.",proSrc:["vlrs","meta"],
+ nota:"Sin mid: las entradas y los teletransportadores mandan. Avisad cada uso de TP. Evitad la comp 'Brimstone, Raze, Skye, Sage, Fade' de ValoHub: es estimación editorial, no dato medido.",
+ comp:[
+ ["Viper","Muro para dividir el sitio; post-plant con Snakebite.","Ancla B con muro y orb (practicad la posición exacta en custom).","Omen","Sin dato pro en Bind; práctica común. Pierdes el muro.",["humos"],["anc"],["humos"],["rot"]],
+ ["Brimstone","Cierra los humos de A o de B y entra de segundo tras Raze; molly en el post-plant.","Humos del sitio atacado; Stim en el retake.","Astra","Sin dato pro en Bind; estrellas globales para rotar. Probar en scrim.",["humos","trade"],["ret"],["humos","trade"],["rot"]],
+ ["Fade","Prowler para despejar el sitio y dar la información.","Haunt para leer quién sale por los teletransportadores.","Sova","Alternativa de información, sin dato pro en Bind.",["info"],["inf"],["info"],["inf"]],
+ ["Raze","Entra primero con Satchel.","Retrasa con Boom Bot y granadas.","Cypher","Centinela que escucha los TP y atrapa flancos; pierdes entry.",["entry"],["ret"],["lurk"],["anc"]],
+ ["Yoru","Usa el TP como fake y guarda el flanco.","Lurk por los teletransportadores para atacar por la espalda.","Skye","Info y flashes seguros; sin dato pro en Bind.",["lurk"],["lurk"],["info"],["inf"]]],
+ zones:[["Sitio A",["A Lobby|Pasillo A","A Short|A corto","A Exit|Salida A","A Cubby|Rincón A","A Teleporter|Teletransportador A","Bath / Showers|Baños / Duchas","Lamps|Lámparas","Tower / Heaven|Torre / Cielo"]],["Mid / Conexión",["Cave|Cueva","Link|Conexión"]],["Sitio B",["B Lobby|Pasillo B","B Short|B corto","B Long|B largo","B Teleporter|Teletransportador B","B Exit|Salida B","Garden|Jardín","Window|Ventana","Elbow|Codo","Hall|Pasillo","Hookah|Hookah","Vent|Ducto (defensor hacia A)"]]],
+ mech:["Los callouts incluyen dos teletransportadores (A y B).","Según The Spike no tiene un carril central definido, aunque lista Cave y Link como zona de conexión."],csrc:["spike"]},
+{id:"corrode",name:"Corrode",conf:"Bajo",sub:"Todo el dato pro es anterior al rework de 13.08. El mapa se reformó en 13.08 y todavía no hay meta nuevo. Candidato a ban si no lo habéis entrenado.",
+ pro:"Todos anteriores al rework de 13.08. Masters Santiago 2026 (7 mapas) / Pacific Kickoff (9) / Champions 2025 (13): Omen 71% / 100% / 85% · Viper 86% / 72% / 77% · Fade 71% / 94% / 65% · Waylay 57% / 61% / 54% · Vyse 43% / sin dato / 42% · Neon 43% / 33% / 23%. Astra 29% en Santiago; Clove y Harbor 0%. En ranked (MetaBot) el ataque gana 49,5% y la defensa 51,5%.",proSrc:["vlrs","meta"],
+ nota:"Riot cambió en 13.08 las rutas de los defensores al fondo de A y B, el half wall de mid, las cajas del Lower Mid y el plant de A. Los callouts de abajo vienen de una guía del parche 11.10 y pueden no coincidir del todo con el mapa actual.",
+ comp:[
+ ["Omen","Cierra los humos del sitio y entra de segundo con Paranoia.","Juega mid y rota con TP.","Clove","Sin dato pro en Corrode; autosuficiente.",["humos","trade"],["rot"],["humos","trade"],["rot"]],
+ ["Viper","Muro más orb para dividir el sitio.","Ancla el otro sitio con muro.","Harbor","Sin dato pro; su muro de agua corta líneas igual. Probar en scrim.",["humos"],["anc"],["humos"],["ret"]],
+ ["Fade","Prowler o Haunt para dar la información antes de entrar.","Juega cerca de mid para dar información de los dos lados.","Sova","Alternativa de información.",["info"],["inf"],["info"],["inf"]],
+ ["Vyse","Guarda el flanco.","Ancla un sitio con Razorvine y Shear en la entrada.","Cypher","Trips y cámara para un mapa de corredores. Sin dato pro en Corrode.",["lurk"],["anc"],["lurk"],["anc"]],
+ ["Waylay","Entra primero.","Pick temprano y retake rápido.","Neon","Neon tuvo 43% en Masters Santiago 2026; Yoru (40% en Champions 2025) también sirve.",["entry"],["rot"],["entry"],["ret"]]],
+ zones:[["Sitio A",["A Main|Entrada A","A Yard|Patio A","A Elbow|Codo A","A Pocket|Bolsillo A","A Link|Conexión A"]],["Sitio B",["B Main|Entrada B","B Tower|Torre B","B Elbow|Codo B","B Link|Conexión B"]],["Mid",["Top Mid|Mid alto","Mid Window|Ventana de mid","Mid Stairs|Escaleras de mid","Bottom Mid|Mid bajo"]],["Lado atacante",["A Lobby|Pasillo A","B Lobby|Pasillo B"]]],
+ mech:["Tres carriles, dos sitios y mucha verticalidad.","Paredes finas: los wallbangs pesan mucho.","Esquinas cerradas que hay que limpiar, sobre todo en Pocket y Elbow.","Mid decide las rotaciones y los flancos.","B es más difícil de entrar que A (según la guía del parche 11.10)."],csrc:["enCor"]},
+{id:"haven",name:"Haven",conf:"Medio",sub:"Mapa de tres sitios: gana quien lee antes la rotación.",
+ pro:"Champions 2026 (10 mapas): Neon 85% · Sova 80% · Omen 70% · Chamber 60% · Yoru 45% / Phoenix 45% · Astra 25% · Killjoy 20% · Fade 20% · Jett 0%. Ataque 51% / Defensa 49%.",proSrc:["vlr"],
+ nota:"El quinto puesto (Yoru o Phoenix) está empatado en pro: elegid según quién domine más el agente.",
+ comp:[
+ ["Omen","Cierra los humos del sitio y entra de segundo tras Neon.","Humos en A Short y en C Long.","Astra","25% de presencia en pro; estrellas globales para un mapa de 3 sitios.",["humos","trade"],["ret"],["humos","trade"],["rot"]],
+ ["Sova","Primero dron o Recon: es la fuente de información.","Juega B o mid; Recon a A o C para avisar rotaciones.","Fade","Alternativa de información, sin dato pro por mapa.",["info"],["inf"],["info"],["inf"]],
+ ["Chamber","Guarda el flanco y aguanta el post-plant de lejos.","Ancla A Long con Operator.","Killjoy","Ancla un sitio sola con torreta y alarma. Sin dato pro en Haven.",["lurk"],["anc"],["lurk"],["anc"]],
+ ["Neon","Entra primero.","Pelea C Long temprano.","Jett","Poca presencia en pro; solo si tenéis un Jett muy bueno.",["entry"],["ret"],["entry"],["ret"]],
+ ["Yoru","Segunda entrada con flash y TP detrás de Neon.","Lurk o retrasador en C: hace los fakes.","Phoenix","Empata con Yoru en pro (45% cada uno); más flash y menos lurk.",["trade"],["lurk"],["trade"],["ret"]]],
+ zones:[["Sitio A",["Garden|Jardín","A Lobby|Pasillo A","A Short|A corto","A Long|A largo","A Link|Conexión A","Tower|Torre","Heaven|Cielo","Hell|Infierno (bajo la torre)"]],["Mid",["Mid Window|Ventana de mid","Doors|Puertas","Courtyard|Patio"]],["Sitio B",["B Back|Fondo de B"]],["Sitio C",["C Lobby|Pasillo C","C Long|C largo","C Short|C corto","C Window|Ventana C","C Link|Conexión C","Cubby|Rincón","Plat|Plataforma","Logs|Troncos"]]],
+ mech:["Tres sitios: A, B y C."],csrc:["spike"]},
+{id:"lotus",name:"Lotus",conf:"Alto",sub:"El mapa más favorable a la defensa del pool en Champions.",
+ pro:"Champions 2026 (15 mapas): Omen 100% · Viper 77% · Fade 77% · Chamber 57% · Raze 50% · Neon 50% · Vyse 37% · Skye 23% · Astra, Sova y Clove 0%. Ataque 46% / Defensa 54%.",proSrc:["vlr"],
+ nota:"Las puertas giratorias hacen ruido: avisad cada rotación. Doble controlador para ejecutes lentos y post-plants largos.",
+ comp:[
+ ["Omen","Cierra los humos restantes del sitio y entra de segundo tras Raze.","Juega B o mid: humos para los tres sitios; rota con Shrouded Step.","Clove","Si vuestro controlador es irregular. No se usa en pro.",["humos","trade"],["rot"],["humos","trade"],["rot"]],
+ ["Viper","Muro para dividir el sitio, con más peso en C y A.","Ancla C con muro tóxico y orb en C Mound o Waterfall; post-plant en C.","Astra","Sin dato pro en Lotus; estrellas globales ayudan a rotar. Probar en scrim.",["humos"],["anc"],["humos"],["rot"]],
+ ["Fade","Flashes y Prowler para despejar Rubble o Mound.","Juega B para apoyar las rotaciones; Haunt para leer.","Sova","Información de largo alcance, sin dato pro por mapa.",["info"],["inf"],["info"],["inf"]],
+ ["Chamber","Guarda el flanco desde el sitio contrario.","Ancla A y aguanta A Main de lejos.","Vyse","37% en pro en Lotus (su mejor mapa); Razorvine sella las entradas.",["lurk"],["anc"],["lurk"],["anc"]],
+ ["Raze","Entra primero con Satchel y Paint Shells en las esquinas cerradas.","Juega A Link o B y retrasa con Boom Bot y granada.","Neon","Empata con Raze en pro en Lotus (50% cada uno).",["entry"],["ret"],["entry"],["ret"]]],
+ zones:[["Sitio A",["A Lobby|Pasillo A","Rubble|Escombros","Root|Raíz","A Door|Puerta A","A Main|Entrada A","Tree|Árbol","A Link|Conexión A","Hut|Cabaña","Stairs|Escaleras","A Top|A alto","A Drop|A caída"]],["Sitio B",["Pillars|Pilares","B Main|Entrada B","Upper|Alto"]],["Sitio C",["C Lobby|Pasillo C","Mound|Montículo","C Door|Puerta C","C Main|Entrada C","Bend|Curva","Waterfall|Cascada","C Link|Conexión C","Hall|Pasillo","Gravel|Grava"]]],
+ mech:["Tres sitios: A, B y C. The Spike no lista callouts de mid en Lotus."],csrc:["spike"]},
+{id:"summit",name:"Summit",conf:"Alto",sub:"Pro sólido, pero es el mapa nuevo y su meta aún se mueve.",
+ pro:"Champions 2026 (18 mapas, el más jugado): Neon 83% · Fade 83% · Chamber 69% · Sage 53% · Harbor 44% · Omen 42% · Sova 11%. Ataque 52% / Defensa 48%. En Game Changers (7 mapas): Fade 100%, Neon 86%. En ranked (MetaBot, todos los rangos) la defensa gana 52,8%.",proSrc:["vlr","meta"],
+ nota:"Chamber tiene 69% en pro pero solo 47,2% en ranked: sin un buen Operator, usad Vyse o doble centinela con Sage y Cypher. Los muros caíbles cambian las rotaciones para siempre una vez caídos: no los tiréis por reflejo; dejadlos para cuando tengáis información. Avisad cada muro caído.",
+ comp:[
+ ["Harbor","Cierra los humos del sitio (p. ej. B Tower o Mid) y corta líneas largas.","Retraso en la entrada del sitio atacado; Cascade o High Tide cortan líneas en el retake.","Omen","Casi empatado en pro (Harbor 44% / Omen 42%). Su Paranoia aporta el flash que falta.",["humos"],["ret"],["humos","trade"],["ret"]],
+ ["Fade","Primero Haunt o Prowler para despejar; da la información inicial y entra justo detrás de Neon.","Juega mid o el sitio débil; Haunt para leer el empuje y Prowlers para el retake.","Sova","Alternativa de información, sin dato pro por mapa. Probar en scrim.",["info","trade"],["inf"],["info"],["inf"]],
+ ["Chamber","Guarda el flanco con Trademark y aguanta el post-plant de lejos.","Ancla un sitio con Operator u Outlaw y usa el TP para salir tras el primer pick.","Vyse","Destaca en ranked en Summit (53,1% de win rate, MetaBot); sella entradas.",["lurk"],["anc"],["lurk"],["anc"]],
+ ["Sage","Muro tras plantar para cortar la ruta de retake; slow orbs y resurrección tras el trade.","Ancla el otro sitio: el muro cierra la entrada y el slow frena el rush. Guarda la resurrección para el retake.","Cypher","Más información con cámara y cables. Sin dato pro por mapa.",["post"],["anc"],["lurk"],["anc"]],
+ ["Neon","Entra primero con Fast Lane y Sprint, detrás de los flashes de Fade.","Juega mid (Mid Fountain o Mid Bottom): información agresiva y rota rápido con Sprint.","Phoenix","Flash propio, que falta en la comp. 51,7% de win rate en ranked en Summit.",["entry"],["inf"],["entry"],["inf"]]],
+ zones:[["Sitio A",["Garden|Jardín","A Link|Conexión A","A Wall|Muro A","CT|CT (defensa)","Boxes|Cajas","A Cave|Cueva A"]],["Sitio B",["Triples|Triples","Plant|Zona de plantar","Close Box|Caja cercana","B Wall|Muro B","B Link|Conexión B","B Trophy|Trofeo","B Gym|Gimnasio","B Tower|Torre B"]],["Mid",["Double Box|Caja doble","Mid Wall|Muro de mid","Mid Top|Mid alto","Mid Tiles|Baldosas","Mid Fountain|Fuente","Mid Bend|Curva de mid","Mid Bottom|Mid bajo"]],["Lado atacante",["A Lobby|Pasillo A","B Lobby|Pasillo B"]]],
+ mech:["Muros reactivos: un botón junto a cada uno (dos clics derechos) y quedan cerrados toda la ronda.","Un Shock Dart de Sova bien puesto puede tirar un muro al instante.","Quien quede bajo un muro al cerrarse puede morir; también se destruyen trampas como la torreta de Killjoy o el TP de Yoru.","La cámara de Cypher puesta a través del muro antes de activarlo sigue espiando.","Hay ventilaciones, incluidas las que aparecen al activar un muro, útiles para rebotar flashes.","Ataque: controlad mid primero. Defensa: Sage y Cypher son los centinelas que recomienda la guía; rotad por Mid Fountain."],csrc:["beeS"]},
+{id:"sunset",name:"Sunset",conf:"Alto",sub:"Quien controla mid decide la ronda.",
+ pro:"Champions 2026 (12 mapas): Omen 100% · Neon 79% · Fade 71% · Chamber 67% · Cypher 33% / Sage 33% · Yoru 29% · Sova 25% · Killjoy 0%. Ataque 51% / Defensa 49%. En Game Changers (10 mapas): Omen 100%, Neon 90%, Chamber 70%, Sage 60%. En ranked (MetaBot) la defensa gana 51,9%; Cypher es el mejor agente del mapa (52,9% a 53,1%) y Clove tiene 52,2%.",proSrc:["vlr","meta"],
+ nota:"Los dos centinelas (Chamber y Cypher) hacen fuerte la defensa. La debilidad es que exige ganar mid.",
+ comp:[
+ ["Omen","Toma mid primero con humos a los ángulos de defensa; luego entra de segundo tras Neon.","Humos de mid y de la entrada de A; Paranoia para cortar el ejecute.","Clove","Lidera Sunset en ranked (52,1%, MetaBot); no aparece en pro.",["humos","trade"],["ret"],["humos","trade"],["ret"]],
+ ["Fade","Haunt para despejar mid y limpiar el sitio antes de la entrada.","Juega cerca de mid para apoyar cualquiera de los dos sitios.","Sova","Entre los mejores de Sunset en ranked (MetaBot); 25% en pro.",["info"],["inf"],["info"],["inf"]],
+ ["Chamber","Aguanta el post-plant de lejos con el TP colocado.","Juega A o el ángulo largo de mid con Operator; rota con el TP.","Killjoy","Ancla con torreta; 53,2% de win rate en ranked Plat+ (general). Sin dato pro por mapa.",["post"],["anc"],["post"],["anc"]],
+ ["Cypher","Cámara en mid y trips en el flanco: guarda la espalda del equipo.","Ancla B con trips en B Main y cámara para controlar el flanco de mid.","Sage","Empata con Cypher en pro (33% cada uno); su muro y slow retrasan.",["lurk"],["anc"],["post"],["anc"]],
+ ["Neon","Es la entrada al sitio; split por mid y main.","Pelea mid temprano por el control, que decide el mapa.","Yoru","29% en pro en Sunset; lurk y fakes.",["entry"],["ret"],["entry"],["ret"]]],
+ zones:[["Sitio A",["A Site|Sitio A","A Main|Entrada A","A Lobby|Pasillo A","A Link|Conexión A","A Elbow|Codo A","A Alley|Callejón A"]],["Sitio B",["B Site|Sitio B","B Main|Entrada B","B Lobby|Pasillo B","B Market|Mercado B","B Boba|Boba"]],["Mid",["Mid Courtyard|Patio de mid","Mid Top|Mid alto","Mid Bottom|Mid bajo","Mid Tiles|Baldosas de mid"]]],
+ mech:["Dos sitios unidos por un mid con varios caminos a ambos.","Sin teletransportadores: duelos directos en esquinas.","Muchos ángulos de 90° y rincones, sobre todo en B Site y A Alley: limpiad con utilidad.","Humos en las conexiones entre mid y A Elbow o B Market cortan rotaciones.","Mapa compacto: los defensores rotan y flanquean rápido."],csrc:["enSun"]}
+];
+
+/* Alternativas revisadas contra datos pro de 2026. null = sin alternativa con respaldo. [alt, porQué, arAlt, drAlt] */
+const ALTO={
+ abyss:{0:[null,"Harbor tiene 81% en pro y ningún sustituto aparece en Champions 2026 (Clove 0%). Se mantiene."],
+  2:[null,"Sova tiene 100% en Champions y 94% en Santiago; Skye tiene 0%. Se mantiene."]},
+ bind:{0:[null,"Viper tiene 90% en Santiago, 100% en EMEA Kickoff y 86% en Pacific Kickoff; Omen tiene 0% en los tres. Se mantiene."],
+  1:["Astra","Astra tiene 20% / 17% / 14% en Bind en pro. Estrellas globales para rotar."],
+  2:["Skye","Skye tiene 30% / 54% / 27% en Bind en pro y 52,5% en ranked; Sova tiene 0%.",["info"],["inf"]],
+  3:["Waylay","Waylay tiene 40% / 42% / 41% en Bind en pro; Cypher tiene 0%.",["entry"],["ret"]],
+  4:["Neon","Segundo duelista móvil, mejor cambio que Skye. Sin cifra pro propia de Neon en Bind.",["lurk"],["lurk"]]},
+ corrode:{0:["Astra","Astra tuvo 29% en Santiago en Corrode; Clove tiene 0% en pro.",["humos"],["rot"]],
+  1:[null,"Viper tiene 86% en Santiago, 72% en Pacific Kickoff y 77% en Champions 2025; Harbor tiene 0%. Se mantiene."],
+  3:["Chamber","Chamber tuvo entre 7% y 22% en Corrode en pro; Cypher entre 0% y 11%.",["lurk"],["anc"]]},
+ haven:{3:[null,"Neon tiene 85% en Champions y Jett 0%. Si falta Neon, jugad Yoru y Phoenix juntos."]},
+ lotus:{0:["Clove","Solo para ranked: Clove tiene 0% en pro y fue nerfeada en 13.09. Omen tiene 100% en pro, mantenedlo.",["humos","trade"],["rot"]],
+  1:[null,"Viper tiene 77% en pro; Astra tiene 0%. Se mantiene."],
+  2:["Skye","Skye tiene 23% en Lotus en pro; Sova tiene 0%.",["info"],["inf"]]},
+ summit:{1:["Sova","Alternativa débil: Sova tiene 11% en pro y 47,2% en ranked. KAY/O tuvo 8%.",["info"],["inf"]],
+  2:["Vyse","Vyse tiene 6% en pro pero 53,1% en ranked. Chamber tiene 47,2% en ranked: sin buen Operator, mejor Vyse o doble centinela.",["lurk"],["anc"]],
+  3:["Cypher","Cypher tiene 19% en Champions y 57% en Game Changers. Más información con cámara y cables.",["lurk"],["anc"]],
+  4:["Phoenix","Phoenix tiene 19% en Champions, 57% en Game Changers y 51,6% en ranked. Aporta el flash propio.",["entry"],["inf"]]},
+ sunset:{0:["Clove","Solo para ranked: tiene 52,2% de win rate (MetaBot), 0% en pro y fue nerfeada en 13.09. Omen tiene 100% en pro.",["humos","trade"],["ret"]],
+  2:["Sage","Sage tiene 33% en Champions y 60% en Game Changers; con Cypher forma doble centinela. Killjoy tiene 0% en pro.",["post"],["anc"]],
+  3:[null,"Cypher tiene 33% en Champions y es el mejor agente del mapa en ranked. Se mantiene."]}
+};
+MAPS.forEach(m=>{const o=ALTO[m.id]||{};Object.keys(o).forEach(i=>{const c=m.comp[i],x=o[i];
+ if(x[0]===null){c[3]=c[0];c[4]=x[1];c[7]=c[5];c[8]=c[6]}
+ else{c[3]=x[0];c[4]=x[1];if(x[2]){c[7]=x[2];c[8]=x[3]}}})});
+
+/* ---------- Estado ---------- */
+const st={map:0,tab:"comp",sel:0,swap:{},side:"atk"};
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const TABS=[["comp","Comp"],["atk","Ataque"],["def","Defensa"],["tl","Línea de tiempo"],["map","Mapa y zonas"],["guide","Guía y fuentes"]];
+
+/* Comp principal (useAlt=false) o comp con todas las alternativas (useAlt=true). */
+function slots(m,useAlt){
+ return m.comp.map((c,i)=>useAlt
+  ?{i,name:c[3],alt:true,orig:c[0],ar:c[7],dr:c[8],atk:`Ocupa el puesto de ${c[0]}. No hay dato por mapa para ${c[3]}: usad las posiciones de su kit con el mismo rol que ${c[0]}.`,def:`Ocupa el puesto de ${c[0]}. No hay dato por mapa para ${c[3]}: usad las posiciones de su kit con el mismo rol que ${c[0]}.`,why:c[4],other:c[0],same:c[3]===c[0]}
+  :{i,name:c[0],alt:false,orig:c[0],ar:c[5],dr:c[6],atk:c[1],def:c[2],why:c[4],other:c[3],same:c[3]===c[0]});
+}
+function tokens(a){return (FUNC[a]||"").split(" · ")}
+function coverage(sl){
+ const r={};F7.forEach(f=>r[f]=0);
+ sl.forEach(s=>tokens(s.name).forEach(t=>{
+  if(t==="Flasher parcial"){if(!r.Flasher)r.Flasher=.5}
+  else if(r[t]!==undefined)r[t]=1;
+ }));
+ return r;
+}
+function tagChips(arr,dict){return arr.map(k=>`<span class="chip">${esc(dict[k])}</span>`).join("")}
+function av(name){return `<span class="im"><img src="${img(name)}" alt=""></span>`}
+
+/* ---------- Vistas ---------- */
+function block(sl,isAlt){
+ const cnt={Controlador:0,Iniciador:0,Centinela:0,Duelista:0};
+ sl.forEach(s=>cnt[ROLE[s.name]]++);
+ const cov=coverage(sl);
+ const stats=Object.keys(cnt).map(r=>`<div class="rolechip cut ${cnt[r]?"":"zero"}" style="--c:${RCOL[r]}"><span class="n">${cnt[r]}</span><span>${RPLUR[r]}<small>${cnt[r]?"en la comp":"ninguno: cubrid el hueco"}</small></span></div>`).join("");
+ const cv=F7.map(f=>{const v=cov[f];const c=v===1?"yes":v?"part":"no";const sym=v===1?"✓":v?"~":"✗";return `<span class="cv ${c}" title="${esc(F7D[f])}"><i>${sym}</i>${f}</span>`}).join("");
+ const cards=sl.map(s=>{
+  const r=ROLE[s.name];
+  const dato=/\d%/.test(s.why)?'<span class="pill dato">Dato</span>':'<span class="pill crit">Criterio</span>';
+  const pos=isAlt?`<p class="pos"><b>${s.same?"Se mantiene":"Reemplaza a "+esc(s.orig)}</b>${esc(s.why)} ${dato}</p>`
+   :`<p class="pos"><b>Ataque</b>${tagChips(s.ar,AR)}<br>${esc(s.atk)}</p><p class="pos"><b>Defensa</b>${tagChips(s.dr,DR)}<br>${esc(s.def)}</p>
+     ${s.same?`<div class="alt"><span class="im"></span><div><small>SIN ALTERNATIVA</small>${esc(s.why)} ${dato}</div></div>`:`<div class="alt"><span class="im"><img src="${img(s.other)}" alt=""></span><div><small>ALTERNATIVA</small><b>${esc(s.other)}</b> <span class="role" style="color:${RCOL[ROLE[s.other]]}">${ROLE[s.other]}</span><br>${esc(s.why)} ${dato}</div></div>`}`;
+  return `<div class="card cut" style="--c:${RCOL[r]}">
+   <span class="rank ${s.alt?"alt":""}">${s.alt?(s.same?"IGUAL":"ALT."):"PRINCIPAL"}</span>
+   <span class="pic"><img src="${img(s.name)}" alt="${esc(s.name)}"></span>
+   <div class="body"><h3>${esc(s.name)}</h3><span class="role">${r}</span>
+   <span class="chips">${tokens(s.name).map(t=>`<span class="chip">${esc(t)}</span>`).join("")}</span>${pos}</div></div>`}).join("");
+ return `<div class="stats">${stats}</div><div class="cov" aria-label="Cobertura de las 7 funciones">${cv}</div><div class="grid">${cards}</div>`;
+}
+function vComp(m){
+ const proLinks=m.proSrc.map(k=>`<a href="${S[k][1]}" target="_blank" rel="noopener">${esc(S[k][0])}</a>`).join(" · ");
+ return `<h2 class="sec">Mejor composición</h2>`+block(slots(m,false),false)
+  +`<h2 class="sec">Composición alternativa</h2><p class="sub">Cada agente cambia por su alternativa. Donde no hay una con respaldo pro, el agente se mantiene.</p>`+block(slots(m,true),true)
+  +`<div class="note"><b>Presencia pro y ranked</b> <span class="pill dato">Dato</span><br>${esc(m.pro)}<br><small>Fuente: ${proLinks}. Cifras tomadas de mi investigación previa; verificadlas en la fuente antes de citarlas.</small></div>
+  <div class="note"><b>Aviso del mapa</b><br>${esc(m.nota)}</div>`;
+}
+function order(sl,key,keys){
+ return keys.map(k=>[k,sl.filter(s=>s[key].includes(k))]);
+}
+function vRole(m,sl,key){
+ const atk=key==="ar";
+ const keys=atk?["entry","trade","humos","info","lurk","post"]:["anc","inf","ret","rot","lurk"];
+ const dict=atk?AR:DR;
+ const sub={entry:"Abre el duelo y crea espacio.",trade:"Entra justo detrás para castigar y vengar.",humos:"Tapa ángulos antes de la entrada.",info:"Da la información antes de comprometerse.",lurk:"Juega separado del equipo y cubre flancos.",post:"Mantiene la bomba tras plantar.",
+  anc:"Aguanta un sitio y retrasa hasta que llegue ayuda.",inf:"Lee el empuje y avisa.",ret:"Frena el avance para ganar tiempo.",rot:"Rota al sitio atacado y hace el retake."}
+ ;
+ const g=order(sl,key,keys).filter(x=>x[1].length).map(([k,arr])=>`<div class="group"><h3>${dict[k]} <small>${sub[k]}</small></h3>${arr.map(s=>`<div class="row cut"><div class="av"><img src="${img(s.name)}" alt=""></div><div><b>${esc(s.name)}</b> ${s.alt?'<span class="pill prac">Alternativa</span>':""} <span class="pill prac">Práctica</span><p>${esc(atk?s.atk:s.def)}</p><p style="color:var(--mut);font-size:13.5px">${s.same?"Sin alternativa con respaldo. ":"Alternativa: <b>"+esc(s.other)+"</b>. "}${esc(s.why)}</p></div></div>`).join("")}</div>`).join("");
+ return `<div class="note"><b>Cómo leer esto.</b> Los roles (entry, segunda entrada, lurk, ancla) siguen las definiciones de <a href="${S.dote[1]}" target="_blank" rel="noopener">Dot Esports</a>. A qué agente le toca cada uno en este mapa es criterio basado en su kit.</div>${g}`;
+}
+function who(sl,key,k){
+ const a=sl.filter(s=>s[key].includes(k));
+ return a.length?a.map(s=>`<span class="ag">${av(s.name)}${esc(s.name)}</span>`).join(""):`<span class="none">Nadie en esta comp</span>`;
+}
+function vTl(m,sl){
+ const atk=st.side==="atk";
+ const W=(k,l)=>`<div><span class="lab">${l}</span>${who(sl,atk?"ar":"dr",k)}</div>`;
+ const D='<span class="pill dato">Dato</span>',P='<span class="pill prac">Práctica</span>';
+ let ph;
+ if(atk) ph=[
+  ["Tomar espacio","0:00–0:15",D,"Salid y reclamad terreno neutral, sobre todo mid, sin pelear de más.",W("humos","Humos")+W("info","Info")],
+  ["Default","0:15–0:40",D,"Repartíos por los carriles, usad la utilidad de recon y buscad picks baratos. El objetivo es que la defensa revele dónde está, no conseguir kills.",W("info","Info")+W("lurk","Lurk")],
+  ["Lectura","Antes de comprometerse",D,"Antes de ir al sitio debéis tener lectura de al menos dos defensores y ojos en los carriles por donde pueden empujar.",W("info","Info")+W("lurk","Lurk")],
+  ["Comprometer o fakear","0:40–0:55",D,"Si el sitio parece blando, ejecutad. Si la defensa lo apila, enseñad presión y rotad al otro.",W("humos","Humos")+W("lurk","Lurk")],
+  ["Ejecución","0:55–1:15",D,"El orden es utilidad, luego entrada, luego trade, todo en unos 2–3 segundos. No hagáis dry-peek a un sitio sin humo o flash.",W("humos","1 · Utilidad")+W("info","1 · Info/flash")+W("entry","2 · Entrada")+W("trade","3 · Trade")],
+  ["Plantar y post-plant","Plantar 4 s · bomba 45 s",D,"Plantad solo con el sitio limpio, en un lugar que el equipo pueda cubrir. Repartíos para cruzar los ángulos del retake. Defuse completo: 7 s; medio defuse: 3,5 s. Guardad una utilidad para los últimos segundos.",W("post","Post-plant")+W("lurk","Lurk")+W("humos","Humos del retake")]
+ ];
+ else ph=[
+  ["Al inicio de la ronda","Sin tiempo fijo",P,"Colocad la utilidad de información y tomad vuestras posiciones. Nadie rota con la primera información.",W("inf","Info")+W("anc","Ancla")],
+  ["Mientras ellos hacen el default","Sin tiempo fijo",P,"Retrasad y dad información sin gastar toda la utilidad. Los lurkers de defensa buscan el flanco o la espalda.",W("ret","Retraso")+W("inf","Info")+W("lurk","Lurk")],
+  ["Contacto y rotación","Cuando hay ejecución",P,"Los anclas aguantan el sitio atacado; los demás rotan solo con información confirmada, con humos y retrasos para ganar tiempo.",W("anc","Ancla")+W("ret","Retraso")+W("rot","Rotación")],
+  ["Retake tras la plantada","Bomba 45 s · defuse 7 s",D,"Con la bomba plantada el tiempo manda: el defuse completo cuesta 7 s y el medio defuse 3,5 s. Retomad juntos y con utilidad; con menos de unos 8 s hace falta medio defuse y volver.",W("rot","Retake")+W("anc","Ancla")+W("inf","Info")]
+ ];
+ return `<div class="seg"><button data-side="atk" aria-pressed="${atk}">Ataque</button><button data-side="def" aria-pressed="${!atk}">Defensa</button></div>
+  <div class="note">${atk?`<b>Tiempos.</b> Las fases y los tiempos de ataque son la guía general de <a href="${S.mbmap[1]}" target="_blank" rel="noopener">MetaBot</a> y valen para cualquier mapa. Los tiempos de la bomba salen de <a href="${S.mbspike[1]}" target="_blank" rel="noopener">MetaBot</a>. Quién hace cada cosa en ${esc(m.name)} es ${P}.`:`<b>Tiempos.</b> No he encontrado una fuente con fases cronometradas de defensa, así que no invento segundos. Solo los tiempos de la bomba son dato (<a href="${S.mbspike[1]}" target="_blank" rel="noopener">MetaBot</a>).`}</div>
+  <ol class="tl" style="list-style:none">${ph.map(p=>`<li><div class="t"><h3>${p[0]}</h3><span class="time">${p[1]}</span>${p[2]}</div><p style="margin:6px 0 0">${p[3]}</p><div class="who">${p[4]}</div></li>`).join("")}</ol>`;
+}
+function vMap(m){
+ const zones=m.zones.map(([t,items])=>`<div class="panel cut zone"><h3>${t}</h3><div class="co">${items.map(i=>{const[e,s]=i.split("|");return `<div><span>${esc(e)}</span><span>${esc(s)}</span></div>`}).join("")}</div></div>`).join("");
+ const src=m.csrc.map(k=>`<a href="${S[k][1]}" target="_blank" rel="noopener">${esc(S[k][0])}</a>`).join("");
+ return `<div class="note"><b>Zonas en inglés y español.</b> Los nombres en inglés vienen de la guía citada. La columna en español es traducción literal mía: Riot no publica un nombre oficial en español para cada zona, así que en voz usad el nombre inglés.</div>
+  <div class="zones">${zones}</div><h2 class="sec">Datos del mapa</h2><div class="panel cut"><ul class="plain">${m.mech.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>
+  <p style="margin:8px 0 0"><span class="pill dato">Dato</span> <span class="srcs">${src}</span></p></div>`;
+}
+function vGuide(){
+ const kit=[["Miks","Controlador","Waveform es un humo instantáneo de unos 16 s; M-Pulse cura o aturde; Harmonize mejora cadencia y recarga de un aliado.","miks"],
+  ["Hush","Duelista","Flashbulb (flash), Flow (dash), Displacement (atrae y aturde) y Suspension (ultimate). Llegó con el parche 13.09.","hush"],
+  ["Tejo","Iniciador","Stealth Drone, Guided Salvo, Special Delivery (aturde) y Armageddon (ultimate).","tejo"],
+  ["Veto","Centinela","Chokehold (trampa), Crosscut (teleport), Interceptor (destruye utilidad) y Evolution (ultimate).","veto"]];
+ const kits=kit.map(k=>`<div class="panel cut"><div class="av"><img src="${img(k[0])}" alt=""></div><div><h3 style="font-size:22px">${k[0]}</h3><span class="pill" style="color:${RCOL[k[1]]};border-color:${RCOL[k[1]]}">${k[1]}</span><p style="margin:6px 0 0;font-size:14px">${k[2]}</p><a href="${S[k[3]][1]}" target="_blank" rel="noopener">${esc(S[k[3]][0])}</a></div></div>`).join("");
+ const f7=F7.map(f=>`<tr><td><b>${f}</b></td><td>${esc(F7D[f])}</td></tr>`).join("");
+ const roles=[["Entry","Gana el primer duelo y crea espacio; suelen ser duelistas."],["Segunda entrada","Mantiene el espacio que abre el entry y asegura el trade. Ejemplos de la fuente: Yoru, KAY/O, Omen, Brimstone, Chamber."],["Lurker","Toma ángulos inesperados por el flanco. Mejor encaje: controladores y centinelas."],["Soporte","Reúne información y cubre accesos para que el entry avance."],["Ancla (defensa)","Aguanta un sitio y retrasa; mantiene salida para rotar al retake."]]
+  .map(r=>`<tr><td><b>${r[0]}</b></td><td>${esc(r[1])}</td></tr>`).join("");
+ const srcs=Object.values(S).map(s=>`<a href="${s[1]}" target="_blank" rel="noopener">${esc(s[0])}</a>`).join("");
+ return `<h2 class="sec">Las 7 funciones</h2><div class="panel cut tw"><table><tr><th>Función</th><th>Qué hace</th></tr>${f7}</table></div>
+  <p class="sub" style="margin-top:8px">Qué función cumple cada agente lo he asignado por su kit. No es una estadística.</p>
+  <h2 class="sec">Roles del equipo <span class="pill dato">Dato</span></h2><div class="panel cut tw"><table><tr><th>Rol</th><th>Definición</th></tr>${roles}</table></div>
+  <h2 class="sec">Agentes nuevos</h2><p class="sub">Ninguno está en una comp porque no hay datos pro de este acto.</p><div class="kit">${kits}</div>
+  <h2 class="sec">Límites</h2><div class="panel cut"><ul class="plain"><li>Ninguna fuente publica en qué segundo entra cada agente en cada mapa. Los tiempos de ataque son los de una guía general.</li><li>Las posiciones por agente son práctica basada en el kit. Confirmadlas en custom.</li><li>Premier del Acto 6 usa el mismo pool y rota por semana: Bind, Corrode, Sunset, Haven, Summit, Abyss y Lotus, con playoffs el 6 de diciembre. Las fechas exactas de cada semana no están verificadas: mirad el hub de Premier en el cliente.</li><li>El parche 13.09 bajó la velocidad extra de Clove del 15% al 10%. Por eso Clove solo queda como opción de ranked.</li><li>Las cifras de ranked de MetaBot cambian a diario y no se comparan directo con la presencia pro de vlr.gg.</li><li>Bind y Corrode no estuvieron en Champions 2026: uso Masters Santiago y los Kickoff de 2026 y Champions 2025. En Corrode, ningún dato pro es posterior al rework de 13.08.</li><li>Una presencia pro mide lo que eligen los equipos, no lo que ganan. Con 5 a 18 mapas por evento, diferencias de 10 a 20 puntos pueden ser ruido.</li><li>No pude verificar datos de ranked por rango (Diamante+ o Ascendente+).</li></ul></div>
+  <h2 class="sec">Fuentes</h2><div class="panel cut srcs">${srcs}</div>`;
+}
+
+/* ---------- Render ---------- */
+function render(){
+ const m=MAPS[st.map],sl=slots(m,false);
+ $("#tabs").innerHTML=TABS.map(t=>`<button class="tab" role="tab" data-tab="${t[0]}" aria-selected="${st.tab===t[0]}">${t[1]}</button>`).join("");
+ let body;
+ switch(st.tab){case"comp":body=vComp(m);break;case"atk":body=vRole(m,sl,"ar");break;case"def":body=vRole(m,sl,"dr");break;case"tl":body=vTl(m,sl);break;case"map":body=vMap(m);break;default:body=vGuide()}
+ const head=st.tab==="guide"?"":`<div class="mapHead"><h2>${m.name}</h2><span class="pill conf-${m.conf}">Confianza ${m.conf}</span></div><p class="sub">${esc(m.sub)}</p>`;
+ $("#view").innerHTML=head+body;
+}
+function init(){
+ $("#mapSel").innerHTML=MAPS.map((m,i)=>`<option value="${i}">${m.name}</option>`).join("");
+ const h=(location.hash||"").slice(1),i=MAPS.findIndex(m=>m.id===h);if(i>=0)st.map=i;
+ $("#mapSel").value=st.map;
+ $("#mapSel").addEventListener("change",e=>{st.map=+e.target.value;st.sel=0;try{history.replaceState(null,"","#"+MAPS[st.map].id)}catch(_){}render()});
+ document.addEventListener("click",e=>{
+  const b=e.target.closest("button");if(!b)return;
+  if(b.dataset.tab){st.tab=b.dataset.tab;render();window.scrollTo({top:0})}
+  else if(b.dataset.swap!==undefined){const m=MAPS[st.map],k=+b.dataset.swap;(st.swap[m.id]=st.swap[m.id]||{})[k]=!st.swap[m.id][k];st.sel=k;render()}
+  else if(b.dataset.sel!==undefined){st.sel=+b.dataset.sel;render()}
+  else if(b.dataset.side){st.side=b.dataset.side;render()}
+ });
+ render();
+}
+init();
+</script>
